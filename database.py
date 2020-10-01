@@ -72,6 +72,7 @@ class Database(object):
 
                     # check if parent nodes of cur_version and extracted have the same number of nodes
                     if self.cur_version.calculate_number_of_child_nodes(self.cur_version.parents[self.cur_version.children.index(node)]) != self.extract_version.calculate_number_of_child_nodes(self.extract_version.parents[self.extract_version.children.index(node)]):
+                        granular = True
                         coverage = True
                         break
                 if granular:
