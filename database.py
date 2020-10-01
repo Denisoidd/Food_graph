@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+
 class Database(object):
     '''
     In Database we will have two Model object that will
@@ -32,16 +33,6 @@ class Database(object):
         self.extract_version = deepcopy(self.cur_version)
 
     def get_extract_status(self):
-        print("Cur version")
-        print("Children")
-        print(self.cur_version.children)
-        print("Parents")
-        print(self.cur_version.parents)
-        print("Ext version")
-        print("Children")
-        print(self.extract_version.children)
-        print("Parents")
-        print(self.extract_version.parents)
         # iterate over images
         for image, nodes in self.extract_information.items():
             # check if valid
@@ -62,10 +53,6 @@ class Database(object):
                 granular = False
                 coverage = False
                 for node in nodes:
-                    # print(node)
-                    # print(self.cur_version.calculate_number_of_child_nodes(node))
-                    # print(self.extract_version.calculate_number_of_child_nodes(node))
-                    # print()
                     # check if cur_version and extracted one have different number of child nodes at that particular node
                     if self.cur_version.calculate_number_of_child_nodes(node) != self.extract_version.calculate_number_of_child_nodes(node):
                         granular = True
@@ -75,6 +62,8 @@ class Database(object):
                         granular = True
                         coverage = True
                         break
+
+                # final check coverage is more important than granular
                 if granular:
                     if coverage:
                         self.extract_information[image] = 'coverage_staged'
