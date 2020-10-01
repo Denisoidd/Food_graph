@@ -3,11 +3,9 @@ from database import Database
 # Initial graph
 build = [("core", None), ("A", "core"), ("B", "core"), ("C", "core"), ("C1", "C")]
 # Extract
-extract = {"img001": ["A", "B"], "img002": ["A", "C1"], "img003": ["B", "E"]}
+extract = {"img001": ["A"], "img002": ["C1"]}
 # Graph edits
-edits = [("A1", "A"), ("A2", "A"), ("C2", "C")]
-
-print(build[0][0])
+edits = [("A1", "A"), ("A2", "A")]
 
 # Get status (this is only an example, test your code as you please as long as it works)
 status = {}

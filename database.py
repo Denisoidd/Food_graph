@@ -32,10 +32,56 @@ class Database(object):
         self.extract_version = deepcopy(self.cur_version)
 
     def get_extract_status(self):
+        print("Cur version")
+        print("Children")
         print(self.cur_version.children)
+        print("Parents")
         print(self.cur_version.parents)
+        print("Ext version")
+        print("Children")
         print(self.extract_version.children)
+        print("Parents")
         print(self.extract_version.parents)
+        # iterate over images
+        for image, nodes in self.extract_information.items():
+            # check if valid
+            if nodes != 'invalid':
+                # granularity_staged: label is matched but some labels have new child nodes in the database
+                # that quote is taken from the exercise, but in my solution I will suppose that granularity
+                # staged is place when child nodes added to the its root. Like it was shown in the example from
+                # the assignment:
+                # Extract
+                # extract = {"img001": ["A"], "img002": ["C1"]}
+                # Graph edits
+                # edits = [("A1", "A"), ("A2", "A")]
+                # Result
+                # {"img001": "granularity_staged", "img002": "valid"}
+                # So in that misinterpretation, I choose to work like in the example before.
+
+                # iterate over each node in nodes
+                granular = False
+                coverage = False
+                for node in nodes:
+                    # print(node)
+                    # print(self.cur_version.calculate_number_of_child_nodes(node))
+                    # print(self.extract_version.calculate_number_of_child_nodes(node))
+                    # print()
+                    # check if cur_version and extracted one have different number of child nodes at that particular node
+                    if self.cur_version.calculate_number_of_child_nodes(node) != self.extract_version.calculate_number_of_child_nodes(node):
+                        granular = True
+
+                    # check if parent nodes of cur_version and extracted have the same number of nodes
+                    if self.cur_version.calculate_number_of_child_nodes(self.cur_version.parents[self.cur_version.children.index(node)]) != self.extract_version.calculate_number_of_child_nodes(self.extract_version.parents[self.extract_version.children.index(node)]):
+                        coverage = True
+                        break
+                if granular:
+                    if coverage:
+                        self.extract_information[image] = 'coverage_staged'
+                    else:
+                        self.extract_information[image] = 'granularity_staged'
+                else:
+                    self.extract_information[image] = 'valid'
+
         return self.extract_information
 
 
@@ -73,3 +119,6 @@ class Model(object):
                 self.image_pairs[image] = image_dict[image]
 
         return self.image_pairs
+
+    def calculate_number_of_child_nodes(self, par_node):
+        return sum([1 for elem in self.parents if elem == par_node])
