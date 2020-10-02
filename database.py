@@ -1,4 +1,5 @@
 from copy import deepcopy
+from collections import deque
 
 
 class Database(object):
@@ -53,15 +54,19 @@ class Database(object):
                 granular = False
                 coverage = False
                 for node in nodes:
-                    # check if cur_version and extracted one have different number of child nodes at that particular node
-                    if self.cur_version.calculate_number_of_child_nodes(node) != self.extract_version.calculate_number_of_child_nodes(node):
+                    # check if cur_version and extracted one have different number of child nodes at that particular
+                    # node - Granularity condition
+                    if self.cur_version.get_number_of_child_nodes(node) != self.extract_version.get_number_of_child_nodes(node):
                         granular = True
 
                     # check if parent nodes of cur_version and extracted have the same number of nodes
-                    if self.cur_version.calculate_number_of_child_nodes(self.cur_version.parents[self.cur_version.children.index(node)]) != self.extract_version.calculate_number_of_child_nodes(self.extract_version.parents[self.extract_version.children.index(node)]):
-                        granular = True
-                        coverage = True
-                        break
+                    # Coverage condition (stronger than granularity)
+                    # Could be only if node has a parent
+                    if node != self.cur_version.root:
+                        if self.cur_version.get_number_of_parent_child_nodes(node) != self.extract_version.get_number_of_parent_child_nodes(node):
+                            granular = True
+                            coverage = True
+                            break
 
                 # final check coverage is more important than granular
                 if granular:
@@ -77,38 +82,130 @@ class Database(object):
 
 class Model(object):
     '''
-    Model class represent a directed graph.
-    It contains add_nodes method and extract_valid
+    Model class represent a directed graph
     '''
     def __init__(self, first_element):
         # here we initialize Model class with first_element
-        # we have two lists, first one is responsible for child nodes
-        # second one for parent node, we can have many child nodes but
-        # one or None parent nodes
-        self.children = [first_element]
-        self.parents = [None]
+        # we represent the directed graph structure by using dictionary
+        # key - parent node, list of values - child nodes
+        # in order not to have any problems with None key values
+        # we create another variable to know the root
+        self.root = first_element
+        self.graph = {self.root: []}
         self.image_pairs = {}
+        self.reversed = None
 
     def add_nodes(self, nodes):
-        for child, parent in nodes:
-            self.children.append(child)
-            self.parents.append(parent)
+        # we will add new nodes by using BFS search
+        # firstly we need to find the parent node
+        # and then add a new child node
+        # in our case we have a dict structure so
+        # we can use this as an advantage and
+        # implement search and insert much easily
+
+        # iterate over pairs of child and parent nodes
+        for node in nodes:
+            # check if it's a core node
+            if node[1] == 'core':
+                self.graph[self.root].append(node[0])
+            else:
+                # check if parent node is already in the graph
+                if node[1] in self.graph:
+                    # add the value to the list
+                    self.graph[node[1]].append(node[0])
+                # if parent is not in keys it must be in leafs
+                # we suppose here that parent is valid it must be in
+                # keys or in leafs
+                # so here we need to simply add a new element to our
+                # dictionary
+                else:
+                    self.graph[node[1]] = [node[0]]
+        print("Normal graph")
+        print(self.graph)
 
     def extract_valid(self, image_dict):
-        # check the validity of asked nodes
-        # if there is no valid node to extract
-        # so image is invalid
-        # we suppose that nodes added later doesn't count
+        # here we check if the values that want to be
+        # extracted are correct (valid)
         for image in image_dict:
             # we can have multiply categories for one image
             for category in image_dict[image]:
-                # if we have only one invalid category so image is fully invalid
-                if category not in self.children:
+                # here we check if category is in the graph
+                # to do so we iterate through the graph in BFS manner
+                # starting from the root and descending level by level
+                if not self.bfs_finder(category):
                     self.image_pairs[image] = 'invalid'
                     break
+                # otherwise we just save the values
                 self.image_pairs[image] = image_dict[image]
 
         return self.image_pairs
 
-    def calculate_number_of_child_nodes(self, par_node):
-        return sum([1 for elem in self.parents if elem == par_node])
+    def get_number_of_child_nodes(self, par_node):
+        """
+        In that function we calculate the number of direct child nodes to par_node
+        :param par_node:
+        :return: number of child nodes
+        """
+        # here we will directly use dict structure to get the number of child nodes
+        # check if par_node has child nodes
+        if par_node in self.graph:
+            print(len(self.graph[par_node]))
+            return len(self.graph[par_node])
+        # otherwise return 0
+        return 0
+
+    def get_number_of_parent_child_nodes(self, cur_node):
+        """
+        In that function we calculate the number of direct child nodes to direct parent node
+        :param cur_node:
+        :return: number of child nodes
+        """
+        # check if we've not already created a reversed graph
+        if not self.reversed:
+            self.reverse_graph()
+
+        # we need to obtain a parent node for the cur_node
+        par_node = self.reversed[cur_node]
+
+        # now we can use already implemented function to calculate the number of direct child nodes
+        return self.get_number_of_child_nodes(par_node)
+
+    def bfs_finder(self, category):
+        """
+        Finds if the category is in the graph by
+        Breadth First Search
+        :param category:
+        :return: Boolean
+        """
+        q = deque()
+        q.append(self.root)
+        while q:
+            # if we found a category in queue then we break directly
+            if category in q:
+                return True
+
+            elem = q.popleft()
+
+            if elem in self.graph:
+                for val in self.graph[elem]:
+                    q.append(val)
+
+        return False
+
+    def reverse_graph(self):
+        """
+        Create a reversed graph copy in self.reversed
+        :return:
+        """
+        # here we will directly use the dict structure to reverse the graph
+        # in our task every child node has only one parent node
+        # once we've reversed our graph as keys in dict we will have child nodes
+        # as values we will have parent nodes
+        res = {}
+        for key in self.graph:
+            for value in self.graph[key]:
+                if value:
+                    res[value] = key
+        print("Reversed graph")
+        print(res)
+        self.reversed = res
