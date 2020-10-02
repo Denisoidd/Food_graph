@@ -38,8 +38,8 @@ print(status)
 # checker on json files
 for key in status:
     if status[key] == results[key]:
-        print("Yeah")
+        print("{}: CORRECT".format(key))
     else:
-        print("Noah, {}".format(key))
-        print("Algo: {}".format(status[key]))
-        print("True: {}".format(results[key]))
+        print("WRONG, {}".format(key))
+        print("My implementation: {}".format(status[key]))
+        print("True results: {}".format(results[key]))

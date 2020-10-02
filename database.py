@@ -1,17 +1,19 @@
-from copy import deepcopy
 from collections import deque
+from copy import deepcopy
 
 
 class Database(object):
-    '''
+    """
     In Database we will have two Model object that will
     contain the information of current version and the
-    version just before add_extract function.
+    version at the moment of add_extract function.
     Once the function get_extract_status is called we
     will compare two versions and return for each image
     the result: 'valid', 'invalid', 'granularity_staged' and 'coverage_staged'
-    '''
+    """
+
     def __init__(self, first_element):
+
         # at first we create a cur_version Model object
         self.cur_version = Model(first_element)
 
@@ -20,10 +22,12 @@ class Database(object):
         self.extract_version = None
 
     def add_nodes(self, nodes):
+
         # here we add new nodes through Model class add_nodes method
         self.cur_version.add_nodes(nodes)
 
     def add_extract(self, image_dict):
+
         # extract_information firstly checked if it's valid or invalid
         # if it's valid so we don't change the value
         # if not we change it to 'invalid'
@@ -34,36 +38,30 @@ class Database(object):
         self.extract_version = deepcopy(self.cur_version)
 
     def get_extract_status(self):
+
         # iterate over images
         for image, nodes in self.extract_information.items():
+
             # check if valid
             if nodes != 'invalid':
-                # granularity_staged: label is matched but some labels have new child nodes in the database
-                # that quote is taken from the exercise, but in my solution I will suppose that granularity
-                # staged is place when child nodes added to the its root. Like it was shown in the example from
-                # the assignment:
-                # Extract
-                # extract = {"img001": ["A"], "img002": ["C1"]}
-                # Graph edits
-                # edits = [("A1", "A"), ("A2", "A")]
-                # Result
-                # {"img001": "granularity_staged", "img002": "valid"}
-                # So in that misinterpretation, I choose to work like in the example before.
 
                 # iterate over each node in nodes
                 granular = False
                 coverage = False
                 for node in nodes:
-                    # check if cur_version and extracted one have different number of child nodes at that particular
-                    # node - Granularity condition
-                    if self.cur_version.get_number_of_child_nodes(node) != self.extract_version.get_number_of_child_nodes(node):
+
+                    # check if cur_version and extracted one have different number of direct child nodes at
+                    # that particular node - Granularity condition
+                    if self.cur_version.get_number_of_child_nodes(
+                            node) != self.extract_version.get_number_of_child_nodes(node):
                         granular = True
 
                     # check if parent nodes of cur_version and extracted have the same number of nodes
                     # Coverage condition (stronger than granularity)
                     # Could be only if node has a parent
                     if node != self.cur_version.root:
-                        if self.cur_version.get_number_of_parent_child_nodes(node) != self.extract_version.get_number_of_parent_child_nodes(node):
+                        if self.cur_version.get_number_of_parent_child_nodes(
+                                node) != self.extract_version.get_number_of_parent_child_nodes(node):
                             granular = True
                             coverage = True
                             break
@@ -81,10 +79,12 @@ class Database(object):
 
 
 class Model(object):
-    '''
+    """
     Model class represent a directed graph
-    '''
+    """
+
     def __init__(self, first_element):
+
         # here we initialize Model class with first_element
         # we represent the directed graph structure by using dictionary
         # key - parent node, list of values - child nodes
@@ -92,49 +92,51 @@ class Model(object):
         # we create another variable to know the root
         self.root = first_element
         self.graph = {self.root: []}
+
+        # image_pairs variable used in extract_valid function
         self.image_pairs = {}
+
+        # reversed is a place to save a reversed graph
+        # it will be used in get_number_of_parent_child_nodes function
         self.reversed = None
 
     def add_nodes(self, nodes):
-        # we will add new nodes by using BFS search
-        # firstly we need to find the parent node
-        # and then add a new child node
-        # in our case we have a dict structure so
-        # we can use this as an advantage and
-        # implement search and insert much easily
+        # we will add new nodes by using BFS search firstly we need to find the parent node
+        # and then add a new child node in our case we have a dict structure so
+        # we can use this as an advantage and implement search and insert much easily
 
         # iterate over pairs of child and parent nodes
         for node in nodes:
-            # check if it's a core node
-            if node[1] == 'core':
+
+            # check if it's a root node
+            if node[1] == self.root:
                 self.graph[self.root].append(node[0])
             else:
+
                 # check if parent node is already in the graph
                 if node[1] in self.graph:
+
                     # add the value to the list
                     self.graph[node[1]].append(node[0])
-                # if parent is not in keys it must be in leafs
-                # we suppose here that parent is valid it must be in
-                # keys or in leafs
-                # so here we need to simply add a new element to our
-                # dictionary
+
+                # if parent is not in keys it must be in leafs we suppose here that parent is valid it must be in
+                # keys or in leafs so here we need to simply add a new element to our  dictionary
                 else:
                     self.graph[node[1]] = [node[0]]
-        print("Normal graph")
-        print(self.graph)
 
     def extract_valid(self, image_dict):
-        # here we check if the values that want to be
-        # extracted are correct (valid)
+        # here we check if the values that want to be extracted are correct (valid)
         for image in image_dict:
+
             # we can have multiply categories for one image
             for category in image_dict[image]:
-                # here we check if category is in the graph
-                # to do so we iterate through the graph in BFS manner
+
+                # here we check if category is in the graph to do so we iterate through the graph in BFS manner
                 # starting from the root and descending level by level
                 if not self.bfs_finder(category):
                     self.image_pairs[image] = 'invalid'
                     break
+
                 # otherwise we just save the values
                 self.image_pairs[image] = image_dict[image]
 
@@ -149,8 +151,8 @@ class Model(object):
         # here we will directly use dict structure to get the number of child nodes
         # check if par_node has child nodes
         if par_node in self.graph:
-            print(len(self.graph[par_node]))
             return len(self.graph[par_node])
+
         # otherwise return 0
         return 0
 
@@ -160,9 +162,8 @@ class Model(object):
         :param cur_node:
         :return: number of child nodes
         """
-        # check if we've not already created a reversed graph
-        if not self.reversed:
-            self.reverse_graph()
+        # create reversed graph
+        self.reverse_graph()
 
         # we need to obtain a parent node for the cur_node
         par_node = self.reversed[cur_node]
@@ -206,6 +207,4 @@ class Model(object):
             for value in self.graph[key]:
                 if value:
                     res[value] = key
-        print("Reversed graph")
-        print(res)
         self.reversed = res
