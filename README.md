@@ -16,16 +16,17 @@ Class `Database` as it's been explained have 4 methods:
 * `add_extract`
 * `get_extract_status`
 
-In `__init__` method I have instantiated three variables within 
-each class: `self.cur_version`, `self.extract_version`, `self.extract_information`. First two of them are `Model` instancies and the last is `dict`. From the name of these variables we
-can understang that `self.cur_version` contains information about the current directed graph, `self.extract_version` - information about the directed graph version at the moment of 
-`add_extract`function call and `self.extract_information` contains the valid information we need to extract.
+In `__init__` method I have instantiated three variables within the class: 
+* `self.cur_version` - `Model` instance, contains the current version of the graph
+* `self.extract_version` - `Model` instance, contains the version of the graph at the moment of `add_extract` function call
+* `self.extract_information` - contains the valid information we need to extract
 
 Let's talk about `Model` class implementation. Firstly `Model` represents a directed graph structure implemented with using python `dict`. As a key it has a parent node, as a value it 
 has a list of child nodes. 
 
 This class has following functions: 
-* `__init__` with `self.root`, `self.graph`, `self.image_pairs` and `self.reversed` (reversed graph), `add_nodes`
+* `__init__` with `self.root`, `self.graph`, `self.image_pairs` and `self.reversed` (reversed graph)
+* `add_nodes` - add nodes 
 * `extract_valid` - check at the moment of extraction if image has invalid nodes (for example 'img1.jpg: ['E'] when there is no 'E' in the extracted graph)
 * `get_number_of_child_nodes` - calculate the number of direct child nodes from the current node
 * `get_number_of_parent_child_nodes` - calculate the number of direct child nodes from the direct parent node
