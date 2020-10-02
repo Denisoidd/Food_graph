@@ -2,7 +2,7 @@
 ## How to run ?
 
 Just copy the repository and run the main.py. It will be tested on json files in the repo.
-To test on your own files you load them in main.py file or you can create your own examples also in main.py.
+To test on your own files you can load them in main.py file or you can create your own examples also in main.py.
 
 ## The idea behind 
 
